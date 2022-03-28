@@ -18,25 +18,96 @@ export default function Home() {
   const [totalMintedTokens, setTotalMintedTokens] = useState(zero);
   const web3ModalRef=useRef();
   const connectWallet = async () => {
-
+      try {
+        await getProviderOrSigner();
+        setWalletConnected(true);
+      } catch (error) {
+        console.log(error);
+      }
   } 
-  const getProviderOrSigner = async () => {
+  const getProviderOrSigner = async (needSigner = false) => {
+       const provider = web3ModalRef.current.connect();
+       const web3Provider = providers.Web3Provider(provider);
 
+       const { chainId } = web3Provider.getNetwork();
+       if(chainId != 4){
+        window.alert("Change the network to Rinkeby");
+        throw new Error("Change network to Rinkeby");
+       }
+       if(needSigner){
+         const signer = web3Provider.getSigner();
+         return signer;
+       }
+       return web3Provider;
   }
   const mintCDTokens = async () => {
-
+    try{
+      const signer = await getProviderOrSigner(true);
+      const cryptoDevContract = new Contract(
+        TOKEN_CONTRACT_ADDRESS,
+        TOKEN_CONTRACT_ABI,
+        signer
+      );
+      const tokenPrice = await cryptoDevContract.tokenPrice();
+      const tx = await cryptoDevContract.mint((amountOfTokens),{
+        value: utils.parseEther(tokenPrice*amountOfTokens)
+        });
+      setLoading(true);
+      await tx.wait();
+      setLoading(false);
+      window.alert("You successfully minted Crypto Dev Tokens!");
+    }catch (error) {
+      console.log(error);
+    }
   }
   const claimCDTokens = async () => {
-
+  try{
+      const signer = await getProviderOrSigner(true);
+      const cryptoDevContract = new Contract(
+        TOKEN_CONTRACT_ADDRESS,
+        TOKEN_CONTRACT_ABI,
+        signer
+      );
+      const tx = await cryptoDevContract.claim();
+      setLoading(true);
+      await tx.wait();
+      setLoading(false);
+      window.alert("You successfully claimed Crypto Dev Tokens!");
+    }catch (error) {
+      console.log(error);
+    }
   }
   const getCDTokensOfCurrentUSer = async () => {
-
-  }
-  const getTokensClaimedByCurrentUser = async () => {
-
+    try {
+      const signer = await getProviderOrSigner(true);
+      const cryptoDevContract = new Contract(
+        TOKEN_CONTRACT_ADDRESS,
+        TOKEN_CONTRACT_ABI,
+        signer
+    );
+      const owner=signer.getAddress();
+      const balanceofCD= await cryptoDevContract.balanceOf(owner);
+      setMintedCDTokens(balanceofCD);
+    } catch (error) {
+      console.log(error);
+    }
   }
   const getTotalTokensMinted = async () => {
-
+    try{
+      const signer = await getProviderOrSigner(true);
+      const cryptoDevContract = new Contract(
+        TOKEN_CONTRACT_ADDRESS,
+        TOKEN_CONTRACT_ABI,
+        signer
+      );
+      const totalSupply = await cryptoDevContract.totalSupply();
+      setLoading(true);
+      await totalSupply.wait();
+      setLoading(false);
+      setTotalMintedTokens(totalSupply);
+    }catch(error){
+      console.log(error);
+    }
   }
   useEffect(() => {
     if(!walletConnected){
