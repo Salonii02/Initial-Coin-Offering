@@ -10,7 +10,7 @@ contract CryptoDevToken is ERC20,Ownable {
   uint256 public constant tokenPrice=0.001 ether;
   uint256 public constant tokensPerNFT= 10 * 10**18;
   ICryptoDevs CryptoDevNFT;
-  mapping(unit256 => bool) public tokenIdsClaimed;
+  mapping(uint256 => bool) public tokenIdsClaimed;
   uint256 public tokensToBeClaimed;
 
   constructor(address _cryptoDevContract) ERC20("Crypto Dev Token","CD"){
@@ -30,17 +30,17 @@ contract CryptoDevToken is ERC20,Ownable {
   }
   function getTokensToBeClaimed() public {
       address _owner = msg.sender;
-      uint256 NFTbalance = CryptoDevNFT.balanceOf(owner);
+      uint256 NFTbalance = CryptoDevNFT.balanceOf(_owner);
       if(NFTbalance == 0){
             tokensToBeClaimed=0;
       }
       else{
           uint256 amount=0;
           for(uint256 index=0;index<NFTbalance;index++){
-              const tokenId= CryptoDevNFT.tokenofOwnerByIndex(
+              uint256 tokenId= CryptoDevNFT.tokenofOwnerByIndex(
                   _owner, 
                   index);
-               if(!tokenIdsClaimed(tokenId)){
+               if(!tokenIdsClaimed[tokenId]){
                    amount++;
                }
           }
@@ -49,14 +49,14 @@ contract CryptoDevToken is ERC20,Ownable {
   }
   function claim() public {
       address _owner=msg.sender;
-      uint256 NFTbalance=CryptoDevNFT.balanceOf(owner);
+      uint256 NFTbalance=CryptoDevNFT.balanceOf(_owner);
       require(NFTbalance>0, "You don't own any Crypto Dev Nfts");
       uint256 unclaimedAmount = 0;
       for(uint256 index=0;index<NFTbalance;index++){
           uint256 _currentTokenId=CryptoDevNFT.tokenofOwnerByIndex(
               _owner, 
               index);
-          if(!tokenIdsClaimed(_currentTokenId)){
+          if(!tokenIdsClaimed[_currentTokenId]){
               unclaimedAmount +=1;
               tokenIdsClaimed[_currentTokenId]=true;
           }
