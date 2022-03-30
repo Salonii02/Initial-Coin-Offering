@@ -21,16 +21,17 @@ export default function Home() {
       try {
         await getProviderOrSigner();
         setWalletConnected(true);
+        console.log("Connected")
       } catch (error) {
         console.log(error);
       }
   } 
   const getProviderOrSigner = async (needSigner = false) => {
-       const provider = web3ModalRef.current.connect();
-       const web3Provider = providers.Web3Provider(provider);
+       const provider = await web3ModalRef.current.connect();
+       const web3Provider = new providers.Web3Provider(provider);
 
-       const { chainId } = web3Provider.getNetwork();
-       if(chainId != 4){
+       const { chainId } = await web3Provider.getNetwork();
+       if(chainId !== 4){
         window.alert("Change the network to Rinkeby");
         throw new Error("Change network to Rinkeby");
        }
@@ -38,6 +39,7 @@ export default function Home() {
          const signer = web3Provider.getSigner();
          return signer;
        }
+       console.log("successfull Provider/Signer");
        return web3Provider;
   }
   const mintCDTokens = async () => {
@@ -92,6 +94,7 @@ export default function Home() {
       const address=signer.getAddress();
       const balanceofCD= await cryptoDevContract.balanceOf(address);
       setMintedCDTokens(balanceofCD);
+      console.log("successfull getCDTokens");
     } catch (error) {
       console.log(error);
       setMintedCDTokens(zero);
@@ -107,6 +110,7 @@ export default function Home() {
       );
       const _tokensTobeClaimed = tokenContract.tokensToBeClaimed();
       setTokensToBeClaimed(_tokensTobeClaimed);
+      console.log("successfull TokenstobeClaimed");
     } catch (error) {
       console.log(error);
     }
@@ -117,21 +121,22 @@ export default function Home() {
       const cryptoDevContract = new Contract(
         TOKEN_CONTRACT_ADDRESS,
         TOKEN_CONTRACT_ABI,
-        signer
+        provider
       );
       const totalSupply = await cryptoDevContract.totalSupply();
       setTotalMintedTokens(totalSupply);
+      console.log("successfull for get total tokens minted");
     }catch(error){
       console.log(error);
     }
   }
   useEffect(() => {
     if(!walletConnected){
-       web3ModalRef.current=new Web3Modal({
-        network:"rinkeby",
-        providerOptions:{},
-        disableInjectedProvider:false,
-       });
+       web3ModalRef.current = new Web3Modal({
+        network: "rinkeby",
+        providerOptions: {},
+        disableInjectedProvider: false,
+      });
        connectWallet();
        getCDTokensOfCurrentUSer();
        getTotalTokensMinted();
@@ -213,9 +218,10 @@ export default function Home() {
          <div>
             <h1 className={styles.title}> Welcome to Crypto Devs ICO</h1>
             <div className={styles.description}> You can claim or mint Crypto Dev tokens here </div>
+            {renderButton()}
          </div>
          <div>
-            <img className={styles.image} src="./0.svg" />
+            <img className={styles.image} src="./cryptodevs/0.svg" />
          </div>
       </div>
       <footer className={styles.footer}>

@@ -10,9 +10,7 @@ module.exports = {
   networks: {
     rinkeby: {
       url: ALCHEMY_API_KEY_URL,
-      accounts: [RINKEBY_PRIVATE_KEY],
-      gas: 2100000,
-      gasPrice: 8000000000
+      accounts: [RINKEBY_PRIVATE_KEY]
     },
   },
 };
