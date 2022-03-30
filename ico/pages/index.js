@@ -10,9 +10,9 @@ import {
 } from '../constants'
 export default function Home() {
   const zero = BigNumber.from(0);
+  const [walletConnected,setWalletConnected]=useState(false);
   const [loading, setLoading] = useState(false);
   const [tokensToBeClaimed, setTokensToBeClaimed] = useState(zero);
-  const [walletConnected,setWalletConnected]=useState(false);
   const [amountOfTokens, setAmountOfTokens]=useState(zero);
   const [mintedCDTokens,setMintedCDTokens]=useState(zero);
   const [totalMintedTokens, setTotalMintedTokens] = useState(zero);
@@ -49,8 +49,9 @@ export default function Home() {
         signer
       );
       const tokenPrice = await cryptoDevContract.tokenPrice();
+      const value = tokenPrice*amountOfTokens;
       const tx = await cryptoDevContract.mint((amountOfTokens),{
-        value: utils.parseEther(tokenPrice*amountOfTokens)
+        value: utils.parseEther(value.toString()),
         });
       setLoading(true);
       await tx.wait();
@@ -79,31 +80,46 @@ export default function Home() {
   }
   const getCDTokensOfCurrentUSer = async () => {
     try {
-      const signer = await getProviderOrSigner(true);
+      const provider = await getProviderOrSigner(true);
       const cryptoDevContract = new Contract(
         TOKEN_CONTRACT_ADDRESS,
         TOKEN_CONTRACT_ABI,
-        signer
+        provider,
     );
-      const owner=signer.getAddress();
-      const balanceofCD= await cryptoDevContract.balanceOf(owner);
+      // We will need signer to extract the address of the 
+      // currently connected Metamask
+      const signer = await getProviderOrSigner(true);
+      const address=signer.getAddress();
+      const balanceofCD= await cryptoDevContract.balanceOf(address);
       setMintedCDTokens(balanceofCD);
+    } catch (error) {
+      console.log(error);
+      setMintedCDTokens(zero);
+    }
+  }
+  const getTokensToBeClaimed = async () => {
+    try {
+      const provider = await getProviderOrSigner();
+      const tokenContract = new Contract(
+        TOKEN_CONTRACT_ADDRESS,
+        TOKEN_CONTRACT_ABI,
+        provider
+      );
+      const _tokensTobeClaimed = tokenContract.tokensToBeClaimed();
+      setTokensToBeClaimed(_tokensTobeClaimed);
     } catch (error) {
       console.log(error);
     }
   }
   const getTotalTokensMinted = async () => {
     try{
-      const signer = await getProviderOrSigner(true);
+      const provider = await getProviderOrSigner();
       const cryptoDevContract = new Contract(
         TOKEN_CONTRACT_ADDRESS,
         TOKEN_CONTRACT_ABI,
         signer
       );
       const totalSupply = await cryptoDevContract.totalSupply();
-      setLoading(true);
-      await totalSupply.wait();
-      setLoading(false);
       setTotalMintedTokens(totalSupply);
     }catch(error){
       console.log(error);
@@ -119,9 +135,73 @@ export default function Home() {
        connectWallet();
        getCDTokensOfCurrentUSer();
        getTotalTokensMinted();
+       getTokensToBeClaimed();
     }
 
-  }, [walletConnected])
+  }, [walletConnected]);
+  const renderButton = () => {
+    if(loading){
+      return(
+        <div>
+          <button className={styles.button}>Loading ....</button>
+        </div>
+      );
+    }
+    if(!walletConnected){
+      return(
+        <div>
+          <button className={styles.button}> 
+            Connect Your Wallet First
+          </button>
+        </div>
+      );
+    }
+    if(walletConnected){
+       if(tokensToBeClaimed > 0){
+         return (
+            <div>
+              <div className={styles.description}>
+                {tokensToBeClaimed*10} tokens can be claimed!!
+              </div>
+              <button className={styles.button} onClick={claimCDTokens}>
+                Claim
+              </button>
+            </div>
+         );
+       }
+       return(
+            <div>
+            <div className={styles.description}>
+                {/* Format Ether helps us in converting a BigNumber to string */}
+                You have minted {utils.formatEther(mintedCDTokens)}{" "}
+                Crypto Dev Tokens
+              </div>
+              <div className={styles.description}>
+                {/* Format Ether helps us in converting a BigNumber to string */}
+                Overall {utils.formatEther(totalMintedTokens)}/10000 have been
+                minted!!!
+              </div>
+            <div style={{ display:"flex-col" }}>
+                  <div>
+                    <input
+                        type="number"
+                        placeholder="Amount of Tokens"
+                        onChange={(e) => setAmountOfTokens(BigNumber.from(e.target.value))}
+                        className={styles.input}
+                     />
+                  </div>
+                  <button 
+                  className={styles.button} 
+                  disabled={!(amountOfTokens>0)}
+                  onClick={() => mintCDTokens(amountOfTokens)}
+                  >
+                  Mint Tokens
+                  </button>
+            </div>
+            </div>
+       );
+    }
+  }
   return (
     <div>
       <Head>
