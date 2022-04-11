@@ -1,4 +1,4 @@
-export const TOKEN_CONTRACT_ABI = [
+export const TOKEN_CONTRACT_ABI =  [
   {
     "inputs": [
       {
@@ -439,4 +439,4 @@ export const TOKEN_CONTRACT_ABI = [
     "type": "receive"
   }
 ]
-export const TOKEN_CONTRACT_ADDRESS = "0x71065a1264dB476Aca74a5A9E7000b993Dffe837";
+export const TOKEN_CONTRACT_ADDRESS = "0x3be04903DD56663a465D13A92F0fAe9F4fBA4A9B";

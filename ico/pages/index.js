@@ -50,7 +50,8 @@ export default function Home() {
         TOKEN_CONTRACT_ABI,
         signer
       );
-      const tokenPrice = await cryptoDevContract.tokenPrice();
+      const tokenPrice = 0.01;
+      console.log(tokenPrice);
       const value = tokenPrice*amountOfTokens;
       const tx = await cryptoDevContract.mint((amountOfTokens),{
         value: utils.parseEther(value.toString()),
@@ -143,7 +144,7 @@ export default function Home() {
        getTokensToBeClaimed();
     }
 
-  }, [walletConnected]);
+  }, [walletConnected,mintedCDTokens,totalMintedTokens]);
   const renderButton = () => {
     if(loading){
       return(
